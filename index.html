@@ -339,6 +339,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .steps{color:var(--muted);font-size:.85rem;line-height:1.6;padding-left:20px;margin:0 0 14px}.steps code{color:var(--accent);word-break:break-all;user-select:all}
 .sp-input{width:100%;padding:13px 16px;margin-bottom:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;color:var(--text);outline:none}
 @media(max-width:820px){.layout{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--border)}.play{width:120px;height:120px}}
+
+.layout{min-height:calc(100vh - 46px)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 18px;min-height:46px;padding:10px 20px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--border);background:#0a0a0a;color:var(--muted-2);font-size:.74rem}
+.foot b{color:var(--accent);font-family:var(--font-mono);font-weight:600}
+.foot-info{font-family:var(--font-mono);color:var(--muted)}
+.foot-info.warn{color:#f5c542}
 </style>
 </head>
 <body>
@@ -371,6 +377,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <h4>Lautstärke</h4><input type="range" id="vol" min="0" max="1" step="0.01">
 </aside>
 </div>
+<footer class="foot" id="footer"><span>SongGuessr <b id="verLabel">V2026.1</b></span><span class="foot-info" id="audioInfo">Audio: –</span></footer>
   <!-- ===================== RESULT OVERLAY ===================== -->
   <div class="overlay" id="resultOverlay" hidden>
     <div class="result-card">
@@ -917,22 +924,21 @@ impossible:[
   var cfg={mode:'preview',stages:[0.1,0.5,2,8,15],volume:0.8,clientId:'',refresh:'',level:'easy'};
   try{var sv=JSON.parse(localStorage.getItem('sg_cfg')||'{}');for(var k in sv)cfg[k]=sv[k];}catch(e){}
   function save(){try{localStorage.setItem('sg_cfg',JSON.stringify(cfg));}catch(e){}}
-  var state={song:null,stageIndex:0,score:0,active:false,loading:false,selectedSuggestion:null,played:{},lastArtist:null,timer:null,toastTimer:null};
-  var SP={token:null,exp:0,player:null,device:null,ready:false,awaiting:false,dur:0};
+  var state={song:null,stageIndex:0,score:0,active:false,loading:false,selectedSuggestion:null,played:{},lastArtist:null,timer:null,toastTimer:null,loadId:0,streamOnly:false,spWarned:false};
+  var SP={token:null,exp:0,player:null,device:null,ready:false,run:0,muted:false,noAnalysis:false};
   var SCOPES='streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
   var REDIRECT=location.origin+location.pathname;
 
   /* =========================================================
-     AUDIO-ENGINE (Web Audio API)
-     Der komplette Preview-Clip wird vor dem Start vollständig
-     heruntergeladen und dekodiert (statt per <audio>-Streaming).
-     Dadurch: (1) lässt sich die Stille am Clip-Anfang erkennen und
-     exakt wegschneiden, (2) startet die Wiedergabe sample-genau
-     ohne Netzwerk-/Decoder-Verzögerung, sobald der Button gedrückt
-     wird, und (3) kann der Button zuverlässig deaktiviert bleiben,
-     bis wirklich alles bereit ist.
+     AUDIO-ENGINE (Web Audio API) – V2026.1
+     Vorschau-Modus: Der komplette 30-s-Clip wird vollständig geladen
+     und dekodiert. Danach wird (1) die Stille / das Fade-in am Anfang
+     exakt erkannt und weggeschnitten und (2) bei jedem Druck auf Play
+     genau die eingestellte Dauer ab dem ersten hörbaren Ton abgespielt
+     (sample-genau geplant, zusätzlich mit hartem Stopp-Timer).
   ========================================================= */
-  var audioCtx=null, masterGain=null, activeSource=null, activeGain=null;
+  var VERSION='V2026.1';
+  var audioCtx=null, masterGain=null, activeSource=null, activeGain=null, playToken=0;
   function ensureAudioCtx(){
     if(!audioCtx){
       var AC=window.AudioContext||window.webkitAudioContext;
@@ -943,71 +949,150 @@ impossible:[
     }
     return audioCtx;
   }
-  function resumeAudioCtx(){
-    var ctx=ensureAudioCtx();
-    if(ctx.state==='suspended'){try{ctx.resume();}catch(e){}}
-    return ctx;
+  function whenRunning(ctx){
+    if(ctx.state==='running')return Promise.resolve();
+    var p=null;try{p=ctx.resume();}catch(e){}
+    var guard=new Promise(function(r){setTimeout(r,1000);});
+    return Promise.race([(p&&p.then)?p.then(function(){},function(){}):Promise.resolve(),guard]);
   }
-  function fetchArrayBufferCors(url){
-    var attempts=[url,
-      'https://corsproxy.io/?url='+encodeURIComponent(url),
-      'https://api.allorigins.win/raw?url='+encodeURIComponent(url)];
-    var i=0;
-    function tryNext(){
-      if(i>=attempts.length)return Promise.reject(new Error('Audio-Download fehlgeschlagen'));
-      var u=attempts[i++];
-      return fetch(u,{mode:'cors'}).then(function(r){
+  /* Download mit hartem Timeout (nichts bleibt mehr ewig hängen) */
+  function fetchBytes(url,ms){
+    return new Promise(function(resolve,reject){
+      var done=false,ctl=window.AbortController?new AbortController():null;
+      var to=setTimeout(function(){if(done)return;done=true;try{if(ctl)ctl.abort();}catch(e){}reject(new Error('Zeitüberschreitung'));},ms);
+      fetch(url,{mode:'cors',signal:ctl?ctl.signal:undefined}).then(function(r){
         if(!r.ok)throw new Error('HTTP '+r.status);
         return r.arrayBuffer();
-      }).catch(function(){return tryNext();});
-    }
-    return tryNext();
-  }
-  function loadAudioBuffer(url){
-    return fetchArrayBufferCors(url).then(function(buf){
-      var ctx=ensureAudioCtx();
-      return ctx.decodeAudioData(buf.slice(0));
+      }).then(function(b){
+        if(done)return;clearTimeout(to);done=true;
+        if(!b||b.byteLength<10000){reject(new Error('Datei leer'));return;}
+        resolve(b);
+      }).catch(function(e){if(done)return;clearTimeout(to);done=true;reject(e);});
     });
   }
-  function detectLeadingSilence(buffer){
-    try{
-      var data=buffer.getChannelData(0);
-      var sr=buffer.sampleRate;
-      var peak=0;
-      for(var p=0;p<data.length;p+=8){var v=Math.abs(data[p]);if(v>peak)peak=v;}
-      var thresh=Math.max(0.012,peak*0.045);
-      var win=Math.max(1,Math.floor(sr*0.005));
-      for(var i=0;i<data.length-win;i+=win){
-        var sum=0;
-        for(var j=0;j<win;j++){var v2=data[i+j];sum+=v2*v2;}
-        var rms=Math.sqrt(sum/win);
-        if(rms>thresh){
-          var t=Math.max(0,i/sr-0.012);
-          var maxOffset=Math.max(0,buffer.duration-16);
-          return Math.min(t,maxOffset);
-        }
-      }
-      return 0;
-    }catch(e){return 0;}
+  function decodeBytes(buf){
+    return new Promise(function(res,rej){
+      var ctx=ensureAudioCtx();
+      var p=ctx.decodeAudioData(buf.slice(0),res,rej);
+      if(p&&p.catch)p.catch(rej);
+    });
   }
-  function playBufferClip(buffer,offset,dur){
-    var ctx=resumeAudioCtx();
-    var src=ctx.createBufferSource();
-    src.buffer=buffer;
-    var env=ctx.createGain();
-    src.connect(env);env.connect(masterGain);
-    var now=ctx.currentTime;
-    var fade=Math.min(0.008,dur/4);
-    env.gain.setValueAtTime(0,now);
-    env.gain.linearRampToValueAtTime(1,now+fade);
-    var sustainEnd=Math.max(fade,dur-fade);
-    env.gain.setValueAtTime(1,now+sustainEnd);
-    env.gain.linearRampToValueAtTime(0,now+dur);
-    var playLen=Math.min(dur+0.02,Math.max(0.01,buffer.duration-offset));
-    src.start(now,offset,playLen);
+  function firstSuccess(list){
+    return new Promise(function(resolve,reject){
+      var n=list.length,errs=0;
+      if(!n){reject(new Error('keine Quelle'));return;}
+      list.forEach(function(p){p.then(resolve,function(){if(++errs===n)reject(new Error('alle Quellen fehlgeschlagen'));});});
+    });
+  }
+  var PROXIES=[
+    function(u){return 'https://corsproxy.io/?url='+encodeURIComponent(u);},
+    function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
+    function(u){return 'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u);}
+  ];
+  function loadBufferFromUrl(url){
+    function via(u,ms){return fetchBytes(u,ms).then(decodeBytes);}
+    return via(url,8000).catch(function(){
+      return firstSuccess(PROXIES.map(function(f){return via(f(url),12000);}));
+    });
+  }
+  /* Zweite Audioquelle (iTunes), falls der Deezer-Clip nicht ladbar ist */
+  function fetchItunesPreviewUrl(artist,track){
+    var url='https://itunes.apple.com/search?media=music&entity=song&limit=15&term='+encodeURIComponent(artist+' '+track);
+    return jsonpRequest(url,8000).then(function(d){
+      var tn=normalizeText(track),an=normalizeText(artist),best=null,bs=0;
+      ((d&&d.results)||[]).forEach(function(r){
+        if(!r.previewUrl||BAD_VERSION_RX.test(r.trackName||''))return;
+        var st=similarity(normalizeText(r.trackName),tn),sa=similarity(normalizeText(r.artistName),an);
+        if(st>0.7&&sa>0.6&&st*2+sa>bs){bs=st*2+sa;best=r;}
+      });
+      return best?best.previewUrl:null;
+    });
+  }
+  function loadAudioBuffer(t){
+    return loadBufferFromUrl(t.previewUrl).catch(function(){
+      return fetchItunesPreviewUrl(t.artistName,t.trackName).then(function(u){
+        if(!u)throw new Error('kein zweiter Clip gefunden');
+        return loadBufferFromUrl(u);
+      });
+    });
+  }
+  /* Findet den ersten wirklich hörbaren Moment des Clips.
+     - 10-ms-Fenster, Stereo-Mix
+     - Referenzpegel = 90. Perzentil der Fenster-Lautstärke
+     - Stille = dauerhaft unter ~8 % des Referenzpegels
+     - Fade-in: Liegt der Start noch deutlich unter dem Normalpegel,
+       wird bis zum Erreichen von ~35 % des Pegels weitergesprungen (max. 2,5 s) */
+  function analyzeStart(buffer){
+    try{
+      var sr=buffer.sampleRate,n=buffer.length,chN=Math.min(buffer.numberOfChannels,2),ch=[];
+      for(var c=0;c<chN;c++)ch.push(buffer.getChannelData(c));
+      var winLen=Math.max(1,Math.round(sr*0.01)),nWin=Math.floor(n/winLen);
+      if(nWin<20)return {ok:false,offset:0};
+      var rms=new Float32Array(nWin),w,k,i;
+      for(w=0;w<nWin;w++){
+        var sum=0,base=w*winLen;
+        for(c=0;c<chN;c++){var d=ch[c];for(i=0;i<winLen;i++){var v=d[base+i];sum+=v*v;}}
+        rms[w]=Math.sqrt(sum/(winLen*chN));
+      }
+      var sorted=Array.prototype.slice.call(rms).sort(function(a,b){return a-b;});
+      var ref=sorted[Math.floor(sorted.length*0.9)]||0;
+      if(ref<0.003)return {ok:false,offset:0};
+      var thr=Math.max(0.0025,ref*0.08);
+      function mean(from,len){var s=0,m=Math.min(len,nWin-from);if(m<=0)return 0;for(var q=0;q<m;q++)s+=rms[from+q];return s/m;}
+      var first=-1;
+      for(w=0;w<nWin-6;w++){
+        if(rms[w]>=thr&&mean(w,6)>=thr){first=w;break;}
+      }
+      if(first<0)return {ok:false,offset:0};
+      var s0=first,target=ref*0.35;
+      if(mean(first,5)<target){
+        var lim=Math.min(nWin-5,first+250);
+        for(w=first;w<lim;w++){if(mean(w,5)>=target){s0=w;break;}}
+      }
+      var t=Math.max(0,(s0*winLen)/sr-0.006);
+      return {ok:true,offset:t};
+    }catch(e){return {ok:true,offset:0};}
+  }
+  function killSources(){
+    if(activeSource){try{activeSource.onended=null;activeSource.stop(0);}catch(e){}try{activeSource.disconnect();}catch(e){}activeSource=null;}
+    if(activeGain){try{activeGain.disconnect();}catch(e){}activeGain=null;}
+    try{audioEl.onplaying=null;audioEl.pause();}catch(e){}
+  }
+  function startClip(buffer,offset,dur){
+    var ctx=ensureAudioCtx();
+    var src=ctx.createBufferSource();src.buffer=buffer;
+    var env=ctx.createGain();src.connect(env);env.connect(masterGain);
+    var len=Math.max(0.01,Math.min(dur,buffer.duration-offset));
+    var t0=ctx.currentTime+0.03,fade=Math.min(0.004,len/4);
+    env.gain.setValueAtTime(0,t0);
+    env.gain.linearRampToValueAtTime(1,t0+fade);
+    env.gain.setValueAtTime(1,t0+len-fade);
+    env.gain.linearRampToValueAtTime(0,t0+len);
+    src.start(t0,offset,len+0.01);
+    src.stop(t0+len+0.02);
     activeSource=src;activeGain=env;
-    src.onended=function(){if(activeSource===src){activeSource=null;activeGain=null;setPlaying(false);}};
+    src.onended=function(){
+      if(activeSource===src){activeSource=null;activeGain=null;clearTimeout(state.timer);setPlaying(false);}
+    };
+    clearTimeout(state.timer);
+    state.timer=setTimeout(function(){killSources();setPlaying(false);},(len+0.45)*1000);
     setPlaying(true);
+  }
+  /* Notfall-Variante, falls der Clip nicht heruntergeladen werden kann:
+     normales <audio>, startet bei 0 s und wird hart nach der Dauer gestoppt */
+  function startStream(url,d,my){
+    try{audioEl.pause();}catch(e){}
+    if(audioEl.getAttribute('data-url')!==url){audioEl.src=url;audioEl.setAttribute('data-url',url);}
+    audioEl.volume=cfg.volume;
+    try{audioEl.currentTime=0;}catch(e){}
+    audioEl.onplaying=function(){
+      if(my!==playToken)return;
+      audioEl.onplaying=null;animateBar(d);setPlaying(true);
+      clearTimeout(state.timer);
+      state.timer=setTimeout(function(){killSources();setPlaying(false);},d*1000);
+    };
+    var p=audioEl.play();
+    if(p&&p.catch)p.catch(function(){if(my===playToken){setPlaying(false);showToast('Wiedergabe blockiert – bitte noch einmal auf Play tippen.');}});
   }
 
   var levelsEl=$('levels'),barEl=$('bar'),playBtn=$('playBtn'),timeLabel=$('timeLabel'),searchWrap=$('searchWrap'),
@@ -1108,11 +1193,6 @@ impossible:[
         SP.player=new Spotify.Player({name:'SongGuessr',getOAuthToken:function(cb){getToken().then(cb);},volume:cfg.volume});
         SP.player.addListener('ready',function(e){SP.device=e.device_id;res();});
         ['initialization_error','authentication_error','account_error'].forEach(function(ev){SP.player.addListener(ev,function(e){rej(new Error(ev==='account_error'?'Spotify Premium erforderlich':e.message));});});
-        SP.player.addListener('player_state_changed',function(s){
-          if(!s)return;
-          if(s.paused)setPlaying(false);
-          else if(SP.awaiting){SP.awaiting=false;stopAfter(SP.dur);}
-        });
         SP.player.connect();
       };
       var s=document.createElement('script');s.src='https://sdk.scdn.co/spotify-player.js';s.onerror=function(){rej(new Error('SDK nicht ladbar'));};document.head.appendChild(s);
@@ -1122,10 +1202,28 @@ impossible:[
     return initPlayer().then(function(){SP.ready=true;cfg.mode='start';save();renderMode();closeOv(spOverlay);loadNewSong();})
       .catch(function(e){SP.ready=false;renderMode();showToast(e.message);openConnect();});
   }
-  function spPlay(uri){
+  function spPlay(uri,posMs){
     return getToken().then(function(t){
-      return fetch('https://api.spotify.com/v1/me/player/play?device_id='+SP.device,{method:'PUT',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({uris:[uri],position_ms:0})});
+      return fetch('https://api.spotify.com/v1/me/player/play?device_id='+SP.device,{method:'PUT',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({uris:[uri],position_ms:Math.max(0,Math.round(posMs||0))})});
+    }).then(function(r){
+      if(!r.ok)throw new Error(r.status===404?'Spotify-Gerät nicht gefunden – bitte Seite neu laden.':(r.status===403?'Spotify Premium erforderlich.':'Spotify-Fehler '+r.status));
     });
+  }
+  /* Versucht per Spotify-Audioanalyse den ersten hörbaren Moment zu finden.
+     (Spotify erlaubt das für neuere Apps teils nicht – dann null.) */
+  function spSilenceStartMs(id){
+    if(SP.noAnalysis)return Promise.resolve(null);
+    return getToken().then(function(t){return fetch('https://api.spotify.com/v1/audio-analysis/'+id,{headers:{Authorization:'Bearer '+t}});})
+      .then(function(r){if(!r.ok){SP.noAnalysis=true;return null;}return r.json();})
+      .then(function(d){
+        if(!d)return null;
+        var seg=d.segments||[];
+        for(var i=0;i<seg.length;i++){
+          var nx=seg[i+1];
+          if(seg[i].loudness_max>-30&&(!nx||nx.loudness_max>-40))return Math.max(0,Math.round(seg[i].start*1000)-10);
+        }
+        return 0;
+      }).catch(function(){return null;});
   }
   function spResolve(artist,track){
     return getToken().then(function(t){
@@ -1136,8 +1234,52 @@ impossible:[
         return !BAD_VERSION_RX.test(x.name)&&similarity(normalizeText(x.artists[0].name),an)>0.6&&similarity(normalizeText(x.name),tn)>0.6;
       }).sort(function(a,b){return (b.popularity||0)-(a.popularity||0);})[0];
       if(!it)return null;
-      return {trackId:it.id,uri:it.uri,trackName:it.name,artistName:it.artists[0].name,artworkUrl:(it.album.images[0]||{}).url||''};
+      var o={trackId:it.id,uri:it.uri,trackName:it.name,artistName:it.artists[0].name,artworkUrl:(it.album.images[0]||{}).url||'',startMs:0,silenceKnown:false};
+      return spSilenceStartMs(it.id).then(function(ms){o.startMs=ms||0;o.silenceKnown=(ms!==null);return o;});
     });
+  }
+  function spStateIsSong(st,s){
+    var c=st&&st.track_window&&st.track_window.current_track;if(!c)return false;
+    return c.id===s.trackId||c.uri===s.uri||!!(c.linked_from&&(c.linked_from.id===s.trackId||c.linked_from.uri===s.uri));
+  }
+  function spMuteAndPause(){
+    SP.muted=true;
+    try{SP.player.setVolume(0);}catch(e){}
+    try{SP.player.pause();}catch(e){}
+  }
+  /* Spotify kann nicht millisekundengenau stoppen. Deshalb: Ton bleibt stumm,
+     bis die Startposition erreicht ist, und wird nach exakt d Sekunden sofort
+     lokal stumm geschaltet (instant) und dann pausiert. */
+  function playSpotifyStage(d){
+    if(!SP.ready||!SP.player||!SP.device){showToast('Spotify ist nicht verbunden.');openConnect();return;}
+    var run=++SP.run,s=state.song,startMs=s.startMs||0,t0=performance.now(),opened=false,openPos=0,openT=0;
+    setPlaying(true);
+    try{SP.player.activateElement();}catch(e){}
+    function fail(msg){if(run!==SP.run)return;stopAudio();showToast(msg||'Spotify-Wiedergabe nicht möglich.');}
+    function finish(){if(run!==SP.run)return;SP.run++;spMuteAndPause();setPlaying(false);}
+    function poll(){
+      if(run!==SP.run)return;
+      var now=performance.now();
+      if(opened&&now-openT>=d*1000){finish();return;}
+      if(!opened&&now-t0>8000){fail('Spotify startet nicht – prüfe Verbindung und Premium-Konto.');return;}
+      SP.player.getCurrentState().then(function(st){
+        if(run!==SP.run)return;
+        now=performance.now();
+        if(st&&!st.paused&&spStateIsSong(st,s)){
+          var pos=st.position;
+          if(!opened&&pos>=startMs-30){
+            opened=true;openPos=pos;openT=now;SP.muted=false;
+            try{SP.player.setVolume(cfg.volume);}catch(e){}
+            animateBar(d);
+          }else if(opened&&(pos-openPos)>=d*1000-15){finish();return;}
+        }
+        setTimeout(poll,10);
+      }).catch(function(){setTimeout(poll,30);});
+    }
+    Promise.resolve(SP.player.setVolume(0)).catch(function(){}).then(function(){
+      SP.muted=true;
+      return spPlay(s.uri,startMs);
+    }).then(poll).catch(function(e){fail(e&&e.message);});
   }
 
   /* ---------- Songauswahl ---------- */
@@ -1148,61 +1290,88 @@ impossible:[
     var f=opts.filter(function(p){return p.artist!==state.lastArtist;});if(f.length)opts=f;
     return opts[Math.floor(Math.random()*opts.length)];
   }
+  function setAudioInfo(t,warn){var e=$('audioInfo');if(!e)return;e.textContent=t;e.classList.toggle('warn',!!warn);}
   function loadNewSong(){
     var spot=cfg.mode==='start';
     if(spot&&!SP.ready){openConnect();return;}
-    var pool=parsePool(cfg.level),attempt=0;
+    var pool=parsePool(cfg.level),attempt=0,bufFails=0,id=++state.loadId;
+    var maxBufFails=state.streamOnly?1:2;
+    var stg=stages(),need=stg[stg.length-1];
     state.loading=true;state.active=false;setLoading(true,'Song wird geladen …');hideSuggestions();
+    function ready(t){
+      state.song=t;state.lastArtist=t.artistName;state.loading=false;setLoading(false);
+      state.stageIndex=0;state.active=true;state.selectedSuggestion=null;searchInput.value='';renderBar();
+    }
     (function next(){
+      if(id!==state.loadId)return;
       if(++attempt>14){state.loading=false;setLoading(false);$('fatalMessage').textContent='Es konnte kein passender Song geladen werden. Prüfe deine Verbindung und versuche es erneut.';openOv(fatalOverlay);return;}
       var c=pick(pool);state.played[c.key]=1;
       var metaPromise=spot?spResolve(c.artist,c.track):fetchBestTrackMatch(c.artist,c.track);
       metaPromise.then(function(t){
+        if(id!==state.loadId)return;
         if(!t){next();return;}
         if(spot){
-          state.song=t;state.lastArtist=t.artistName;state.loading=false;setLoading(false);
-          state.stageIndex=0;state.active=true;state.selectedSuggestion=null;searchInput.value='';renderBar();
-          return;
+          if(t.silenceKnown)setAudioInfo('Audio: Spotify · Start bei '+(t.startMs/1000).toFixed(2)+' s (Stille übersprungen)');
+          else{
+            setAudioInfo('Audio: Spotify · Stille-Analyse nicht verfügbar',true);
+            if(!state.spWarned){state.spWarned=true;showToast('Spotify erlaubt hier keine Stille-Analyse. Im Vorschau-Modus wird Stille zuverlässig entfernt.');}
+          }
+          ready(t);return;
         }
-        setLoading(true,'Song wird geladen …');
-        loadAudioBuffer(t.previewUrl).then(function(buffer){
-          t.audioBuffer=buffer;
-          t.silenceOffset=detectLeadingSilence(buffer);
-          state.song=t;state.lastArtist=t.artistName;state.loading=false;setLoading(false);
-          state.stageIndex=0;state.active=true;state.selectedSuggestion=null;searchInput.value='';renderBar();
-        }).catch(function(){next();});
-      }).catch(next);
+        if(bufFails>=maxBufFails){
+          t.streamUrl=t.previewUrl;state.streamOnly=true;
+          setAudioInfo('Audio: Stream · ⚠ Clip nicht ladbar, Stille kann nicht entfernt werden',true);
+          showToast('Audio-Download blockiert – Notfall-Modus ohne Stille-Entfernung.');
+          ready(t);return;
+        }
+        setLoading(true,'Audio wird vorbereitet …');
+        return loadAudioBuffer(t).then(function(buffer){
+          if(id!==state.loadId)return;
+          var an=analyzeStart(buffer);
+          if(!an.ok||buffer.duration-an.offset<need+0.05){next();return;}
+          t.audioBuffer=buffer;t.silenceOffset=an.offset;state.streamOnly=false;
+          setAudioInfo('Audio: Web Audio · Stille entfernt: '+an.offset.toFixed(2)+' s · nutzbar: '+(buffer.duration-an.offset).toFixed(1)+' s');
+          ready(t);
+        },function(){if(id!==state.loadId)return;bufFails++;next();});
+      }).catch(function(){next();});
     })();
   }
   function newRound(){stopAudio();closeOv(resultOverlay);loadNewSong();}
 
   /* ---------- Wiedergabe ---------- */
   function stopAudio(){
-    clearTimeout(state.timer);SP.awaiting=false;
-    if(activeSource){try{activeSource.onended=null;activeSource.stop(0);}catch(e){}try{activeSource.disconnect();}catch(e){}activeSource=null;}
-    if(activeGain){try{activeGain.disconnect();}catch(e){}activeGain=null;}
-    if(SP.player){try{SP.player.pause();}catch(e){}}
+    playToken++;SP.run++;
+    clearTimeout(state.timer);
+    killSources();
+    if(SP.player){spMuteAndPause();}
     setPlaying(false);
     var p=barEl.querySelector('.bar-play');if(p){p.style.transition='none';p.style.width='0';}
   }
-  function stopAfter(d){clearTimeout(state.timer);state.timer=setTimeout(stopAudio,Math.max(d*1000,10));}
   function playStage(){
-    if(!state.song||!state.active||state.loading)return;
+    if(state.loading){showToast('Song wird noch geladen …');return;}
+    if(!state.song||!state.active)return;
     stopAudio();
-    var d=stages()[state.stageIndex];animateBar(d);
-    if(cfg.mode==='start'){
+    var my=playToken,d=stages()[state.stageIndex],s=state.song;
+    if(cfg.mode==='start'){playSpotifyStage(d);return;}
+    if(s.audioBuffer){
+      var ctx=ensureAudioCtx();
       setPlaying(true);
-      try{SP.player.activateElement();}catch(e){}
-      SP.awaiting=true;SP.dur=d;
-      spPlay(state.song.uri).catch(function(){setPlaying(false);showToast('Wiedergabe nicht möglich.');});
-      setTimeout(function(){if(SP.awaiting){SP.awaiting=false;stopAfter(d);}},1800);
-    }else{
-      if(!state.song.audioBuffer){showToast('Audio ist noch nicht bereit.');return;}
-      playBufferClip(state.song.audioBuffer,state.song.silenceOffset||0,d);
-    }
+      whenRunning(ctx).then(function(){
+        if(my!==playToken)return;
+        if(ctx.state!=='running'){setPlaying(false);showToast('Audio ist blockiert – bitte noch einmal auf Play tippen.');return;}
+        animateBar(d);
+        startClip(s.audioBuffer,s.silenceOffset||0,d);
+      });
+    }else if(s.streamUrl){
+      startStream(s.streamUrl,d,my);
+    }else showToast('Audio ist noch nicht bereit.');
   }
   playBtn.addEventListener('click',playStage);
-  function applyVolume(){if(masterGain)masterGain.gain.value=cfg.volume;if(SP.player)SP.player.setVolume(cfg.volume);}
+  function applyVolume(){
+    if(masterGain)masterGain.gain.value=cfg.volume;
+    try{audioEl.volume=cfg.volume;}catch(e){}
+    if(SP.player&&!SP.muted){try{SP.player.setVolume(cfg.volume);}catch(e){}}
+  }
   $('vol').value=cfg.volume;
   $('vol').oninput=function(){cfg.volume=parseFloat(this.value);save();applyVolume();};
   $('modePreview').onclick=function(){if(cfg.mode==='preview')return;cfg.mode='preview';save();renderMode();newRound();};
@@ -1483,13 +1652,17 @@ impossible:[
     $('resultLevelUp').textContent='';
     $('resultStage').textContent=won?stages()[state.stageIndex]+'s':'—';$('resultPoints').textContent=won?'+'+p:'0';
     openOv(resultOverlay);
-    if(cfg.mode==='start'&&SP.ready&&s.uri)spPlay(s.uri).catch(function(){});
+    if(cfg.mode==='start'&&SP.ready&&s.uri){
+      SP.muted=false;
+      Promise.resolve(SP.player.setVolume(cfg.volume)).catch(function(){}).then(function(){return spPlay(s.uri,s.startMs||0);}).catch(function(){});
+    }
   }
   $('newRoundBtn').addEventListener('click',newRound);
   $('retryBtn').addEventListener('click',function(){closeOv(fatalOverlay);loadNewSong();});
   window.addEventListener('offline',function(){showToast('Keine Internetverbindung.');});
 
   /* ---------- Start ---------- */
+  $('verLabel').textContent=VERSION;
   renderLevels();renderChips();renderBar();renderMode();applyVolume();updateScore();
   var code=new URLSearchParams(location.search).get('code');
   if(code){
