@@ -424,110 +424,494 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <script>
 (function(){
 "use strict";
-  var BAD_VERSION_RX = /\b(live|remix|karaoke|cover version|instrumental|acapella|a cappella|sped up|slowed|8d audio|tribute)\b/i;
 
   var LEVELS=[['easy','Easy','#22e06b'],['medium','Medium','#f5c542'],['hard','Hard','#ff8a3d'],['expert','Expert','#ff4d5e'],['impossible','Impossible','#a259ff']];
   var ALL=[0.01,0.1,0.5,2,8,15];
   var $=function(i){return document.getElementById(i);};
-  
-var POOLS={
+  var BAD_VERSION_RX = /\b(live|remix|karaoke|cover version|instrumental|acapella|a cappella|sped up|slowed|8d audio|tribute)\b/i;
+  var POOLS={
 easy:[
-"Queen|Bohemian Rhapsody;We Will Rock You;Don't Stop Me Now;Another One Bites the Dust;Somebody to Love",
-"Michael Jackson|Billie Jean;Thriller;Beat It;Smooth Criminal;Black or White",
-"Ed Sheeran|Shape of You;Perfect;Thinking Out Loud","Adele|Rolling in the Deep;Someone Like You;Hello",
-"Bruno Mars|Uptown Funk;Just the Way You Are;Locked Out of Heaven","The Weeknd|Blinding Lights;Starboy",
-"ABBA|Dancing Queen;Mamma Mia;Waterloo","Coldplay|Viva la Vida;Yellow;Fix You","Rihanna|Umbrella;We Found Love;Diamonds",
-"Katy Perry|Firework;Roar","Lady Gaga|Bad Romance;Poker Face;Just Dance","Eminem|Lose Yourself;Without Me",
-"Beyoncé|Halo;Single Ladies","Taylor Swift|Shake It Off;Blank Space;Love Story","Journey|Don't Stop Believin'",
-"Nirvana|Smells Like Teen Spirit","Guns N' Roses|Sweet Child O' Mine","a-ha|Take On Me","Survivor|Eye of the Tiger",
-"Whitney Houston|I Will Always Love You;I Wanna Dance with Somebody","Elton John|Rocket Man;I'm Still Standing",
-"Fleetwood Mac|Dreams","The Police|Every Breath You Take","Toto|Africa","Dua Lipa|Levitating;Don't Start Now",
-"Harry Styles|As It Was","David Guetta|Titanium","Avicii|Wake Me Up","Pharrell Williams|Happy",
-"Imagine Dragons|Believer;Radioactive","Backstreet Boys|I Want It That Way","Justin Bieber|Sorry;Baby",
-"Maroon 5|Sugar","Shakira|Hips Don't Lie;Waka Waka","Luis Fonsi|Despacito","PSY|Gangnam Style","Wham!|Last Christmas",
-"Mariah Carey|All I Want for Christmas Is You","Europe|The Final Countdown","Rick Astley|Never Gonna Give You Up",
-"Village People|Y.M.C.A.","Gloria Gaynor|I Will Survive","Bee Gees|Stayin' Alive","AC/DC|Highway to Hell;Back in Black",
-"Bon Jovi|Livin' on a Prayer","Aerosmith|I Don't Want to Miss a Thing","The Beatles|Hey Jude;Let It Be;Yesterday",
-"Oasis|Wonderwall","Linkin Park|In the End;Numb","Sam Smith|Stay With Me","Billie Eilish|bad guy",
-"Lewis Capaldi|Someone You Loved","Miley Cyrus|Flowers;Wrecking Ball","Olivia Rodrigo|drivers license;good 4 u",
-"Justin Timberlake|Can't Stop the Feeling!","Ariana Grande|7 rings;Thank U, Next","Britney Spears|...Baby One More Time;Toxic",
-"Christina Aguilera|Genie in a Bottle","Spice Girls|Wannabe","Madonna|Like a Prayer","Prince|Purple Rain",
-"Cyndi Lauper|Girls Just Want to Have Fun","Eagles|Hotel California","Deep Purple|Smoke on the Water",
-"Pink Floyd|Another Brick in the Wall","Lynyrd Skynyrd|Sweet Home Alabama","Earth, Wind & Fire|September",
-"Kool & The Gang|Celebration","Daft Punk|Get Lucky","Calvin Harris|Summer","Alan Walker|Faded","Sia|Cheap Thrills",
-"Wiz Khalifa|See You Again","Tones and I|Dance Monkey","Lil Nas X|Old Town Road","Bob Marley|Three Little Birds;No Woman No Cry",
-"Macklemore|Thrift Shop","Post Malone|Rockstar","Mark Ronson|Valerie","Avril Lavigne|Complicated;Sk8er Boi"],
+"Deep Purple|Smoke on the Water",
+"Metallica|Enter Sandman;Master of Puppets;Nothing Else Matters",
+"Guns N' Roses|Sweet Child O' Mine;Welcome to the Jungle;Paradise City",
+"The White Stripes|Seven Nation Army",
+"AC/DC|Back in Black;Thunderstruck;Highway to Hell;You Shook Me All Night Long",
+"Michael Jackson|Billie Jean;Beat It;Thriller;Smooth Criminal",
+"Queen|Another One Bites the Dust;We Will Rock You;Bohemian Rhapsody",
+"Eurythmics|Sweet Dreams (Are Made of This)",
+"Survivor|Eye of the Tiger",
+"Europe|The Final Countdown",
+"Eagles|Hotel California",
+"The Clash|Should I Stay or Should I Go",
+"Nirvana|Smells Like Teen Spirit",
+"Aerosmith|Walk This Way",
+"Cream|Sunshine of Your Love",
+"Ozzy Osbourne|Crazy Train",
+"Bon Jovi|Livin' on a Prayer;Wanted Dead or Alive",
+"a-ha|Take On Me",
+"Pink Floyd|Money;Another Brick in the Wall",
+"Bee Gees|Stayin' Alive",
+"Village People|Y.M.C.A.",
+"Gloria Gaynor|I Will Survive",
+"Van Halen|Jump",
+"Lynyrd Skynyrd|Sweet Home Alabama",
+"Yes|Owner of a Lonely Heart",
+"ZZ Top|Sharp Dressed Man;La Grange",
+"Toto|Africa",
+"Daft Punk|One More Time;Get Lucky",
+"Rick Astley|Never Gonna Give You Up",
+"Wham!|Last Christmas;Wake Me Up Before You Go-Go",
+"Mariah Carey|All I Want for Christmas Is You",
+"Whitney Houston|I Wanna Dance with Somebody;I Will Always Love You",
+"Elton John|Rocket Man;Crocodile Rock",
+"Fleetwood Mac|Dreams;Go Your Own Way",
+"The Police|Every Breath You Take",
+"ABBA|Dancing Queen;Mamma Mia;Waterloo;Gimme! Gimme! Gimme!",
+"Kool & The Gang|Celebration",
+"Earth, Wind & Fire|September",
+"Black Sabbath|Iron Man;Paranoid",
+"Steppenwolf|Born to Be Wild",
+"The Kinks|You Really Got Me",
+"Derek and the Dominos|Layla",
+"Journey|Don't Stop Believin'",
+"Whitesnake|Here I Go Again",
+"Twisted Sister|We're Not Gonna Take It",
+"Kiss|Rock and Roll All Nite",
+"Def Leppard|Pour Some Sugar on Me",
+"Red Hot Chili Peppers|Can't Stop",
+"The Rolling Stones|(I Can't Get No) Satisfaction;Paint It Black",
+"The Beatles|Come Together;Here Comes the Sun;Hey Jude",
+"The Who|Baba O'Riley",
+"Creedence Clearwater Revival|Bad Moon Rising;Fortunate Son",
+"Steve Miller Band|The Joker",
+"Boston|More Than a Feeling",
+"Foreigner|Jukebox Hero;I Want to Know What Love Is",
+"Kansas|Carry On Wayward Son",
+"Rush|Tom Sawyer",
+"Dire Straits|Money for Nothing;Sultans of Swing",
+"Prince|When Doves Cry;Purple Rain",
+"Madonna|Like a Prayer;Vogue",
+"Cyndi Lauper|Girls Just Want to Have Fun",
+"George Michael|Faith",
+"Billy Idol|White Wedding;Rebel Yell",
+"Bonnie Tyler|Total Eclipse of the Heart",
+"Michael Jackson|Black or White",
+"Ed Sheeran|Shape of You",
+"Adele|Rolling in the Deep;Someone Like You;Hello",
+"Bruno Mars|Uptown Funk;24K Magic",
+"The Weeknd|Blinding Lights",
+"Rihanna|Umbrella;Diamonds",
+"Katy Perry|Firework;Roar",
+"Lady Gaga|Bad Romance;Poker Face;Just Dance",
+"Eminem|Lose Yourself;Without Me",
+"Beyoncé|Halo;Single Ladies (Put a Ring on It)",
+"Taylor Swift|Shake It Off;Blank Space",
+"Imagine Dragons|Believer;Radioactive",
+"Justin Bieber|Sorry;Baby",
+"Maroon 5|Sugar;Moves Like Jagger",
+"Shakira|Hips Don't Lie;Waka Waka (This Time for Africa)",
+"Luis Fonsi|Despacito",
+"PSY|Gangnam Style",
+"Avicii|Wake Me Up;Levels",
+"David Guetta|Titanium",
+"Pharrell Williams|Happy",
+"Dua Lipa|Levitating;Don't Start Now",
+"Harry Styles|As It Was",
+"Backstreet Boys|I Want It That Way;Everybody (Backstreet's Back)",
+"Spice Girls|Wannabe",
+"Britney Spears|...Baby One More Time;Toxic",
+"Christina Aguilera|Genie in a Bottle",
+"NSYNC|Bye Bye Bye",
+"Outkast|Hey Ya!",
+"will.i.am|I Gotta Feeling",
+"Macklemore|Thrift Shop",
+"Mark Ronson|Uptown Funk",
+"Tones and I|Dance Monkey",
+"Lil Nas X|Old Town Road",
+"Bob Marley|Three Little Birds;No Woman No Cry;Jamming",
+"Men at Work|Down Under",
+"Blondie|Heart of Glass",
+"The B-52's|Love Shack",
+"Starship|We Built This City",
+"Oasis|Wonderwall",
+"Blur|Song 2",
+"Green Day|American Idiot;Basket Case",
+"Blink-182|All the Small Things",
+"My Chemical Romance|Welcome to the Black Parade",
+"The Prodigy|Firestarter",
+"Fatboy Slim|Right Here, Right Now",
+"Gorillaz|Feel Good Inc.",
+"Jamiroquai|Virtual Insanity",
+"Rammstein|Du Hast;Sonne",
+"Nena|99 Luftballons",
+"Falco|Rock Me Amadeus",
+"Modern Talking|You're My Heart, You're My Soul",
+"Haddaway|What Is Love",
+"Snap!|Rhythm Is a Dancer",
+"Los Del Rio|Macarena",
+"Vengaboys|Boom, Boom, Boom, Boom!!",
+"Eiffel 65|Blue (Da Ba Dee)",
+"Darude|Sandstorm",
+"Alphaville|Forever Young",
+"Herbert Grönemeyer|Männer",
+"Peter Fox|Haus am See",
+"Die Toten Hosen|Tage wie diese",
+"Elvis Presley|Jailhouse Rock;Hound Dog",
+"Chuck Berry|Johnny B. Goode",
+"Louis Armstrong|What a Wonderful World",
+"Frank Sinatra|My Way;Fly Me to the Moon",
+"Nat King Cole|Unforgettable",
+"The Beach Boys|Good Vibrations",
+"Simon & Garfunkel|The Sound of Silence",
+"Bill Withers|Lean on Me;Ain't No Sunshine",
+"Marvin Gaye|I Heard It Through the Grapevine",
+"Stevie Wonder|Superstition;Isn't She Lovely",
+"James Brown|I Got You (I Feel Good)",
+"Aretha Franklin|Respect",
+"Donna Summer|I Feel Love;Hot Stuff",
+"Chic|Le Freak;Good Times",
+"Sister Sledge|We Are Family",
+"KC and the Sunshine Band|That's the Way (I Like It)",
+"Technotronic|Pump Up the Jam",
+"C+C Music Factory|Gonna Make You Sweat",
+"2 Unlimited|No Limit",
+"Black Box|Ride on Time",
+"Corona|The Rhythm of the Night",
+"Whigfield|Saturday Night",
+"Aqua|Barbie Girl",
+"Steps|5,6,7,8",
+"S Club 7|Reach",
+"Smash Mouth|All Star",
+"The Verve|Bitter Sweet Symphony",
+"Robbie Williams|Angels;Let Me Entertain You"],
 medium:[
-"Foo Fighters|Everlong;Learn to Fly;The Pretender","Red Hot Chili Peppers|Californication;Under the Bridge;Can't Stop",
-"Arctic Monkeys|Do I Wanna Know;Fluorescent Adolescent","The Killers|Mr. Brightside;Somebody Told Me","Gorillaz|Feel Good Inc.;Clint Eastwood",
-"Daft Punk|One More Time;Around the World","Kings of Leon|Sex on Fire;Use Somebody","Florence + The Machine|Dog Days Are Over",
-"MGMT|Kids;Electric Feel","Passenger|Let Her Go","Lorde|Royals","Post Malone|Circles;Sunflower","Khalid|Location","SZA|Good Days",
-"Charlie Puth|Attention","Shawn Mendes|Stitches","Sam Smith|Too Good at Goodbyes","George Ezra|Budapest;Shotgun",
-"Rag'n'Bone Man|Human","Milky Chance|Stolen Dance","Bastille|Pompeii","Meghan Trainor|All About That Bass",
-"Glass Animals|Heat Waves","Tame Impala|The Less I Know the Better","Portugal. The Man|Feel It Still","Halsey|Without Me",
-"The 1975|Chocolate;Somebody Else","Linkin Park|Somewhere I Belong","Green Day|Boulevard of Broken Dreams;American Idiot",
-"Blink-182|All the Small Things;What's My Age Again?","Sum 41|Fat Lip","My Chemical Romance|Welcome to the Black Parade",
-"Fall Out Boy|Sugar, We're Goin Down","Paramore|Misery Business","Panic! at the Disco|I Write Sins Not Tragedies;High Hopes",
-"Twenty One Pilots|Stressed Out;Heathens","Radiohead|Creep","Oasis|Don't Look Back in Anger;Champagne Supernova",
-"Blur|Song 2","The Cranberries|Zombie","R.E.M.|Losing My Religion","U2|With or Without You;Beautiful Day",
-"Metallica|Enter Sandman;Nothing Else Matters","Black Sabbath|Paranoid","Depeche Mode|Enjoy the Silence",
-"The Cure|Just Like Heaven;Friday I'm in Love","Duran Duran|Hungry Like the Wolf","Tears for Fears|Everybody Wants to Rule the World",
-"Kate Bush|Running Up That Hill","Dire Straits|Sultans of Swing;Money for Nothing","Phil Collins|In the Air Tonight",
-"Eurythmics|Sweet Dreams","Rammstein|Du Hast;Sonne","Nena|99 Luftballons","Falco|Rock Me Amadeus","Scorpions|Wind of Change",
-"Peter Fox|Haus am See","Cro|Easy","Sido|Mein Block","Herbert Grönemeyer|Männer","Die Toten Hosen|Tage wie diese",
-"Helene Fischer|Atemlos durch die Nacht","Andreas Bourani|Auf uns","Silbermond|Symphonie","Tokio Hotel|Durch den Monsun",
-"Kendrick Lamar|HUMBLE.","Drake|Hotline Bling;God's Plan","Kanye West|Stronger","Outkast|Hey Ya!","50 Cent|In da Club",
-"Coolio|Gangsta's Paradise","Usher|Yeah!","Amy Winehouse|Rehab;Back to Black","Norah Jones|Don't Know Why",
-"Jason Mraz|I'm Yours","John Legend|All of Me","Stevie Wonder|Superstition","Sting|Englishman in New York"],
+"Sam Smith|Stay With Me",
+"Sia|Chandelier;Cheap Thrills",
+"Khalid|Location",
+"SZA|Good Days",
+"Charlie Puth|Attention;See You Again",
+"Shawn Mendes|Stitches;Treat You Better",
+"George Ezra|Budapest;Shotgun",
+"Rag'n'Bone Man|Human",
+"Milky Chance|Stolen Dance",
+"Bastille|Pompeii",
+"Meghan Trainor|All About That Bass",
+"Glass Animals|Heat Waves",
+"Tame Impala|The Less I Know the Better",
+"Portugal. The Man|Feel It Still",
+"Halsey|Without Me",
+"The 1975|Somebody Else",
+"Twenty One Pilots|Stressed Out;Heathens",
+"Panic! at the Disco|High Hopes;I Write Sins Not Tragedies",
+"Fall Out Boy|Sugar, We're Goin Down",
+"Paramore|Misery Business",
+"Sum 41|Fat Lip",
+"Arctic Monkeys|Do I Wanna Know;R U Mine?",
+"The Killers|Mr. Brightside;Somebody Told Me",
+"Kings of Leon|Sex on Fire;Use Somebody",
+"Florence + The Machine|Dog Days Are Over;Shake It Out",
+"Lorde|Royals",
+"Post Malone|Circles;Sunflower",
+"Khalid|Young Dumb & Broke",
+"Billie Eilish|bad guy;Happier Than Ever",
+"Lewis Capaldi|Someone You Loved",
+"Olivia Rodrigo|drivers license;good 4 u",
+"Miley Cyrus|Flowers;Wrecking Ball",
+"Justin Timberlake|Can't Stop the Feeling!;SexyBack",
+"Ariana Grande|7 rings;Thank U, Next;Problem",
+"Usher|Yeah!;DJ Got Us Fallin' in Love",
+"Christina Aguilera|Beautiful",
+"John Legend|All of Me",
+"Jason Mraz|I'm Yours",
+"Amy Winehouse|Rehab;Back to Black",
+"Norah Jones|Don't Know Why",
+"Sting|Englishman in New York",
+"Kendrick Lamar|HUMBLE.",
+"Drake|Hotline Bling;God's Plan;One Dance",
+"Kanye West|Stronger;Gold Digger",
+"50 Cent|In da Club",
+"Coolio|Gangsta's Paradise",
+"The Chainsmokers|Closer;Don't Let Me Down",
+"Calvin Harris|Summer;This Is What You Came For",
+"Clean Bandit|Rather Be",
+"Sean Paul|Temperature",
+"Flo Rida|Low;Right Round",
+"Pitbull|Timber;Give Me Everything",
+"Jason Derulo|Talk Dirty",
+"OneRepublic|Counting Stars;Apologize",
+"Train|Hey, Soul Sister",
+"Owl City|Fireflies",
+"Passenger|Let Her Go",
+"Gotye|Somebody That I Used to Know",
+"Carly Rae Jepsen|Call Me Maybe",
+"Icona Pop|I Love It",
+"Zedd|Clarity",
+"Kygo|Firestone",
+"Marshmello|Happier",
+"Alan Walker|Faded",
+"Ellie Goulding|Love Me Like You Do;Burn",
+"Jess Glynne|Hold My Hand",
+"Clean Bandit|Symphony",
+"MGMT|Kids;Electric Feel",
+"Vampire Weekend|A-Punk",
+"Two Door Cinema Club|What You Know",
+"Foster the People|Pumped Up Kicks",
+"Walk the Moon|Shut Up and Dance",
+"Fun.|We Are Young",
+"American Authors|Best Day of My Life",
+"Imagine Dragons|Thunder;Demons",
+"X Ambassadors|Renegades",
+"Welshly Arms|Legendary",
+"Bruno Mars|Treasure;Marry You",
+"Pharrell Williams|Get Lowdown",
+"Daft Punk|Harder, Better, Faster, Stronger",
+"Justice|D.A.N.C.E.",
+"Phil Collins|Easy Lover;Sussudio",
+"Genesis|Invisible Touch",
+"Peter Gabriel|Sledgehammer",
+"Tears for Fears|Everybody Wants to Rule the World;Shout",
+"Duran Duran|Hungry Like the Wolf",
+"Depeche Mode|Enjoy the Silence;Personal Jesus",
+"New Order|Blue Monday",
+"OMD|Enola Gay",
+"Talk Talk|It's My Life",
+"Simple Minds|Don't You (Forget About Me)",
+"INXS|Need You Tonight",
+"Crowded House|Don't Dream It's Over",
+"Tears for Fears|Mad World",
+"Gary Jules|Mad World",
+"U2|With or Without You;Beautiful Day;Vertigo",
+"R.E.M.|Losing My Religion;Everybody Hurts",
+"The Cranberries|Zombie",
+"Dire Straits|Walk of Life",
+"Alanis Morissette|Ironic;You Oughta Know",
+"No Doubt|Don't Speak;Just a Girl",
+"Garbage|Only Happy When It Rains",
+"Natalie Imbruglia|Torn",
+"Savage Garden|Truly Madly Deeply",
+"Hanson|MMMBop",
+"Jewel|Who Will Save Your Soul",
+"Sheryl Crow|All I Wanna Do",
+"Matchbox Twenty|Unwell",
+"Counting Crows|Mr. Jones",
+"Third Eye Blind|Semi-Charmed Life",
+"Barenaked Ladies|One Week",
+"Len|Steal My Sunshine",
+"Sugar Ray|Fly",
+"Smash Mouth|Walkin' on the Sun",
+"Lit|My Own Worst Enemy",
+"Eve 6|Inside Out",
+"Linkin Park|In the End;Numb",
+"Evanescence|Bring Me to Life",
+"3 Doors Down|Kryptonite",
+"Nickelback|How You Remind Me;Photograph",
+"Creed|With Arms Wide Open",
+"Puddle of Mudd|Blurry",
+"Staind|It's Been Awhile",
+"Hoobastank|The Reason",
+"Lifehouse|Hanging by a Moment",
+"Default|Wasting My Time",
+"Lady Gaga|Shallow",
+"Helene Fischer|Atemlos durch die Nacht",
+"Andreas Bourani|Auf uns",
+"Cro|Easy",
+"Sido|Mein Block",
+"Tokio Hotel|Durch den Monsun",
+"Silbermond|Das Beste",
+"Mark Forster|Chöre",
+"Namika|Lieblingsmensch",
+"Céline Dion|My Heart Will Go On",
+"Blackstreet|No Diggity",
+"Marvin Gaye|Ain't No Mountain High Enough"],
 hard:[
-"Radiohead|Karma Police;Paranoid Android;No Surprises","Talking Heads|Once in a Lifetime;Psycho Killer","Pixies|Where Is My Mind?",
-"Beck|Loser;Where It's At","Weezer|Buddy Holly;Say It Ain't So","Modest Mouse|Float On","The Strokes|Last Nite;Reptilia",
-"Interpol|Evil;Obstacle 1","Björk|Army of Me;Hyperballad","Portishead|Glory Box;Sour Times","Massive Attack|Teardrop;Angel",
-"Sigur Rós|Hoppípolla","LCD Soundsystem|All My Friends;Dance Yrself Clean","Hot Chip|Ready for the Floor;Over and Over",
-"Caribou|Odessa","Bon Iver|Skinny Love;Holocene","Fleet Foxes|White Winter Hymnal;Mykonos","Yeah Yeah Yeahs|Maps;Heads Will Roll",
-"Wolf Alice|Don't Delete the Kisses;Bros","Fontaines D.C.|Boys in the Better Land;Starburst","IDLES|Danny Nedelko",
-"Mac DeMarco|Chamber of Reflection;Ode to Viceroy","King Krule|Easy Easy","Jamie xx|Gosh;Loud Places","Four Tet|Baby",
-"Vampire Weekend|A-Punk;Cape Cod Kwassa Kwassa","Arcade Fire|Wake Up;Rebellion (Lies)","The National|Bloodbuzz Ohio;Fake Empire",
-"Sufjan Stevens|Chicago;Mystery of Love","Death Cab for Cutie|I Will Follow You into the Dark","The Shins|New Slang",
-"Belle and Sebastian|The Boy with the Arab Strap","Joy Division|Love Will Tear Us Apart","New Order|Blue Monday;Bizarre Love Triangle",
-"The Smiths|How Soon Is Now?;There Is a Light That Never Goes Out","Pulp|Common People","Suede|Animal Nitrate",
-"The Verve|Bitter Sweet Symphony","Nick Cave & The Bad Seeds|Red Right Hand","Leonard Cohen|Hallelujah;Suzanne",
-"Bob Dylan|Like a Rolling Stone","Neil Young|Heart of Gold","David Bowie|Heroes;Life on Mars?","Iggy Pop|The Passenger;Lust for Life",
-"Patti Smith|Because the Night","Television|Marquee Moon","Roxy Music|Avalon","Kraftwerk|Autobahn;The Model","Röyksopp|Eple;Remind Me",
-"Air|Sexy Boy;La femme d'argent","Justice|D.A.N.C.E.","Kavinsky|Nightcall","M83|Midnight City","CHVRCHES|The Mother We Share",
-"Foals|Spanish Sahara","Bombay Bicycle Club|Always Like This","alt-J|Breezeblocks;Tessellate","Local Natives|Wide Eyes",
-"Grizzly Bear|Two Weeks","Animal Collective|My Girls","Beach House|Space Song","Cocteau Twins|Heaven or Las Vegas",
-"The Velvet Underground|Sunday Morning;Pale Blue Eyes","Tom Waits|Ol' 55","Nick Drake|Pink Moon","Jeff Buckley|Grace"],
+"Led Zeppelin|Stairway to Heaven;Kashmir",
+"Guns N' Roses|November Rain",
+"John Lennon|Imagine",
+"Sinead O'Connor|Nothing Compares 2 U",
+"Radiohead|Creep",
+"Coldplay|Fix You;The Scientist;Clocks;Viva la Vida",
+"The Beatles|Yesterday;Let It Be",
+"Don McLean|American Pie",
+"Simon & Garfunkel|Bridge over Troubled Water",
+"Eric Clapton|Tears in Heaven",
+"Pink Floyd|Wish You Were Here;Comfortably Numb",
+"Bob Dylan|Knockin' on Heaven's Door",
+"Leonard Cohen|Hallelujah",
+"Jeff Buckley|Hallelujah",
+"Snow Patrol|Chasing Cars",
+"Cyndi Lauper|True Colors",
+"Righteous Brothers|Unchained Melody",
+"Elton John|Can You Feel the Love Tonight",
+"Alan Menken|A Whole New World",
+"Eminem|Stan;Love the Way You Lie;Mockingbird",
+"Ed Sheeran|Perfect;Thinking Out Loud",
+"Adele|Chasing Pavements;All I Ask;Easy On Me",
+"Rihanna|Stay",
+"Bruno Mars|When I Was Your Man",
+"Labrinth|Jealous",
+"Lady Gaga|Million Reasons",
+"Sam Smith|Too Good at Goodbyes",
+"A Great Big World|Say Something",
+"Bon Iver|Skinny Love",
+"Birdy|Skinny Love",
+"Silbermond|Symphonie",
+"James Arthur|Say You Won't Let Go",
+"Christina Perri|A Thousand Years",
+"John Mayer|Gravity;Slow Dancing in a Burning Room",
+"Jeff Buckley|Lover, You Should've Come Over",
+"Nina Simone|Feeling Good",
+"Etta James|At Last",
+"Otis Redding|(Sittin' On) The Dock of the Bay",
+"Sam Cooke|A Change Is Gonna Come",
+"Ray Charles|Georgia on My Mind",
+"Roy Orbison|Crying;In Dreams",
+"Patsy Cline|Crazy",
+"Johnny Cash|Hurt;Ring of Fire",
+"Willie Nelson|Always on My Mind",
+"Fleetwood Mac|Landslide;Songbird",
+"Carole King|You've Got a Friend",
+"James Taylor|Fire and Rain",
+"Cat Stevens|Wild World;Father and Son",
+"Simon & Garfunkel|The Boxer",
+"America|A Horse with No Name",
+"Crosby, Stills & Nash|Our House",
+"Jackson Browne|Doctor My Eyes",
+"Gordon Lightfoot|If You Could Read My Mind",
+"Harry Chapin|Cat's in the Cradle",
+"Dan Fogelberg|Same Old Lang Syne",
+"Chicago|If You Leave Me Now",
+"Air Supply|All Out of Love",
+"Toto|I Won't Hold You Back",
+"Christopher Cross|Sailing",
+"Lionel Richie|Hello;Say You, Say Me",
+"Whitney Houston|Greatest Love of All",
+"Celine Dion|Because You Loved Me",
+"Mariah Carey|Hero",
+"Boyz II Men|End of the Road;I'll Make Love to You",
+"Toni Braxton|Un-Break My Heart",
+"Shania Twain|You're Still the One",
+"Faith Hill|This Kiss",
+"LeAnn Rimes|How Do I Live",
+"Backstreet Boys|As Long as You Love Me",
+"*NSYNC|This I Promise You",
+"Boyzone|No Matter What",
+"Westlife|Flying Without Wings",
+"Michael Bublé|Feeling Good;Home",
+"Norah Jones|Come Away with Me",
+"Adele|Turning Tables",
+"Alicia Keys|Fallin';If I Ain't Got You",
+"John Legend|Ordinary People",
+"Alicia Keys|No One",
+"India.Arie|Video",
+"Erykah Badu|On & On",
+"Lauryn Hill|Doo Wop (That Thing)",
+"D'Angelo|Untitled (How Does It Feel)",
+"Maxwell|Ascension (Don't Ever Wonder)",
+"Musiq Soulchild|Just Friends (Sunny)",
+"David Bowie|Heroes;Life on Mars?;Space Oddity"],
 expert:[
-"Slowdive|Alison;When the Sun Hits","My Bloody Valentine|Only Shallow;When You Sleep","Cocteau Twins|Cherry-coloured Funk",
-"Duster|Inside Out","Beach House|Zebra;Myth","DIIV|Doused;Under the Sun","Deerhunter|Nothing Ever Happened;Desire Lines",
-"No Age|Sleeper Hold","METZ|Wet Blanket","Preoccupations|Anxiety","Protomartyr|Pontiac 87","Ought|Habit","Girl Band|Paul",
-"Squid|Houseplants;Narrator","black midi|Speedway;bmbmbm","black country, new road|Science Fair;Sunglasses","Shame|Concrete;Alphabet",
-"Viagra Boys|Sports;Ain't Nice","The Murder Capital|Feeling Fades","Big Thief|Shark Smile;Not","Waxahatchee|Fire;Lilacs",
-"Snail Mail|Pristine;Heat Wave","Soccer Mommy|Circle the Drain;Your Dog","Alex G|Sarah;Gnaw","Elliott Smith|Waltz #2 (XO);Between the Bars",
-"Neutral Milk Hotel|In the Aeroplane Over the Sea;Two-Headed Boy","Silver Jews|Random Rules","Pavement|Cut Your Hair;Gold Soundz",
-"Guided by Voices|Game of Pricks","Built to Spill|Carry the Zero","Yo La Tengo|Autumn Sweater","Stereolab|French Disko",
-"Broadcast|Come On Let's Go","Dungen|Panda","King Gizzard & The Lizard Wizard|Rattlesnake;Robot Stop","Ty Segall|Girlfriend;Freedom",
-"Thee Oh Sees|The Dream","Kurt Vile|Pretty Pimpin;Peeping Tomboy","Japanese Breakfast|Everybody Wants to Love You",
-"Mitski|Your Best American Girl;Nobody","Phoebe Bridgers|Motion Sickness;Kyoto","Angel Olsen|Shut Up Kiss Me","Cat Power|The Greatest",
-"PJ Harvey|Down by the Water","Sleater-Kinney|Dig Me Out","Bikini Kill|Rebel Girl","Fugazi|Waiting Room","Hüsker Dü|Something I Learned Today",
-"Big Star|Thirteen","The Replacements|Bastards of Young","Wire|Outdoor Miner","Gang of Four|Damaged Goods","Alvvays|Archie, Marry Me",
-"Wet Leg|Chaise Longue","Working Men's Club|Bad Blood","Dry Cleaning|Scratchcard Lanyard","Yard Act|The Overload","Sons of Kemet|My Queen Is Ada Eastman"],
+"Phil Collins|In the Air Tonight",
+"Lynyrd Skynyrd|Free Bird",
+"The Beatles|A Day in the Life",
+"Radiohead|Paranoid Android",
+"The Doors|Riders on the Storm;People Are Strange",
+"Journey|Faithfully",
+"Meat Loaf|I'd Do Anything for Love (But I Won't Do That);Paradise by the Dashboard Light",
+"Moody Blues|Nights in White Satin",
+"Guns N' Roses|Don't Cry;Estranged",
+"Metallica|Fade to Black;The Unforgiven",
+"Aerosmith|I Don't Want to Miss a Thing;Dream On",
+"The Notorious B.I.G.|Juicy",
+"Adele|When We Were Young",
+"Coldplay|Yellow",
+"Queen|The Show Must Go On;Who Wants to Live Forever",
+"Pink Floyd|Hey You;Mother",
+"Led Zeppelin|Going to California;Since I've Been Loving You",
+"Eric Clapton|Layla (Acoustic)",
+"Bob Seger|Night Moves;Turn the Page",
+"Tom Petty|Free Fallin';Wildflowers",
+"Neil Diamond|Sweet Caroline;Song Sung Blue",
+"Billy Joel|Piano Man;Vienna",
+"Elton John|Goodbye Yellow Brick Road;Candle in the Wind",
+"Carole King|It's Too Late",
+"Van Morrison|Into the Mystic;Crazy Love",
+"Otis Redding|Try a Little Tenderness",
+"Al Green|Let's Stay Together",
+"Bill Withers|Grandma's Hands",
+"Curtis Mayfield|People Get Ready",
+"The Temptations|My Girl",
+"Smokey Robinson|Tracks of My Tears",
+"The Four Tops|Reach Out I'll Be There",
+"Diana Ross|Ain't No Mountain High Enough",
+"Gladys Knight|Midnight Train to Georgia",
+"Roberta Flack|Killing Me Softly with His Song",
+"The Fugees|Killing Me Softly",
+"Toni Braxton|Breathe Again",
+"Mariah Carey|Vision of Love",
+"Whitney Houston|Didn't We Almost Have It All",
+"George Michael|Careless Whisper",
+"Chicago|You're the Inspiration",
+"Journey|Open Arms",
+"Styx|Babe;Come Sail Away",
+"Kansas|Dust in the Wind",
+"America|Ventura Highway",
+"Fleetwood Mac|Everywhere",
+"Supertramp|The Logical Song",
+"Steely Dan|Rikki Don't Lose That Number;Deacon Blues",
+"10cc|I'm Not in Love",
+"Bread|Make It with You",
+"The Carpenters|Close to You;Yesterday Once More",
+"Barry Manilow|Mandy",
+"Neil Sedaka|Breaking Up Is Hard to Do",
+"Bobby Darin|Beyond the Sea",
+"Andy Williams|Moon River",
+"Burt Bacharach|Walk On By",
+"Dionne Warwick|I Say a Little Prayer"],
 impossible:[
-"The Microphones|The Glow Pt. 2","Have a Nice Life|Bloodhail","Godspeed You! Black Emperor|Storm","This Will Destroy You|The Mighty Rio Grande",
-"Explosions in the Sky|Your Hand in Mine","Mono|Ashes in the Snow","Boris|Farewell","Chelsea Wolfe|Feral Love","Emma Ruth Rundle|Marked for Death",
-"Xiu Xiu|I Luv the Valley OH!","Swans|The Seer","Deafheaven|Dream House","Weyes Blood|Andromeda","Julia Holter|Feel You",
-"Julianna Barwick|Envelop","Colin Stetson|Judges","Oneohtrix Point Never|Chrome Country","Tim Hecker|Ravedeath, 1972",
-"Vashti Bunyan|Diamond Day","Linda Perhacs|Parallelograms","Bill Fay|Be Not So Fearful","Anne Briggs|Blackwaterside",
-"Fairport Convention|Matty Groves","Comus|Diana","Grouper|Heavy Water / I'd Rather Be Sleeping","Sun Kil Moon|Carissa","Mount Eerie|Real Death",
-"Low|Just Like Christmas","Codeine|Cave-In","Slint|Breadcrumb Trail","Talk Talk|I Believe in You","Scott Walker|The Electrician",
-"Arthur Russell|Kiss Me Again","Laurie Anderson|O Superman","Robert Wyatt|Shipbuilding","Nico|These Days","Current 93|Lucifer over London",
-"Coil|The Anal Staircase","Throbbing Gristle|Hamburger Lady","Cluster|Zuckerzeit","Popol Vuh|Aguirre I","Harmonia|Deluxe (Immer wieder)",
-"Amon Düül II|Archangels Thunderbird","Faust|It's a Rainy Day, Sunshine Girl","Can|Halleluwah","Tangerine Dream|Phaedra",
-"Cate Le Bon|Are You with Me Now?","Haley Heynderickx|Oom Sha La La","Black Dice|Smiling Off","Jandek|European Jewel","Earth|Old Black",
-"Sunn O)))|Aghartha","Sleep|Dopesmoker","Yob|Marrow","Neurosis|Locust Star","Converge|Jane Doe","Envy|Rhythm","Rosetta|Ayin",
-"Low Roar|I'll Keep Coming","Sophia|If a Change Is Gonna Come","Songs: Ohia|Farewell Transmission","Smog|Cold Blooded Old Times",
-"Bonnie Prince Billy|I See a Darkness","Vic Chesnutt|Isadora Duncan","Jason Molina|Hold On Magnolia","Yellow Swans|Mirrored","Grouper|Clearing"]
+"Erik Satie|Gymnopédie No. 1",
+"Samuel Barber|Adagio for Strings",
+"Claude Debussy|Clair de Lune",
+"Johann Pachelbel|Canon in D",
+"Ludwig van Beethoven|Moonlight Sonata",
+"Frédéric Chopin|Nocturne Op. 9 No. 2",
+"Sergei Rachmaninoff|Piano Concerto No. 2",
+"Extreme|More Than Words",
+"Guns N' Roses|Patience",
+"Bruce Springsteen|Thunder Road;Jungleland",
+"The Beatles|In My Life;Blackbird",
+"John Lennon|Jealous Guy",
+"George Harrison|Something;While My Guitar Gently Weeps",
+"Paul McCartney|Maybe I'm Amazed",
+"Eric Clapton|Wonderful Tonight",
+"Rod Stewart|Sailing;Maggie May",
+"Van Morrison|Brown Eyed Girl",
+"Dolly Parton|I Will Always Love You;Jolene",
+"Linda Ronstadt|You're No Good",
+"Fleetwood Mac|Albatross",
+"The Eagles|Desperado;New Kid in Town",
+"Jackson Browne|These Days",
+"Joni Mitchell|Both Sides Now;A Case of You",
+"Neil Young|Old Man;Harvest Moon",
+"Cat Stevens|Morning Has Broken",
+"Harry Nilsson|Without You",
+"Badfinger|Without You",
+"Gilbert O'Sullivan|Alone Again (Naturally)",
+"Terry Jacks|Seasons in the Sun",
+"Bread|If",
+"England Dan & John Ford Coley|I'd Really Love to See You Tonight",
+"Seals and Crofts|Summer Breeze",
+"Orleans|Still the One",
+"Player|Baby Come Back",
+"Ambrosia|Biggest Part of Me",
+"Robbie Dupree|Steal Away",
+"Christopher Cross|Ride Like the Wind",
+"Al Stewart|Year of the Cat",
+"Gerry Rafferty|Baker Street",
+"Boz Scaggs|Lowdown",
+"Michael McDonald|I Keep Forgettin'",
+"The Doobie Brothers|What a Fool Believes",
+"Hall & Oates|Sara Smile;She's Gone",
+"Daryl Hall & John Oates|Everytime You Go Away"]
 };
 
   var cfg={mode:'preview',stages:[0.1,0.5,2,8,15],volume:0.8,clientId:'',refresh:'',level:'easy'};
@@ -537,6 +921,94 @@ impossible:[
   var SP={token:null,exp:0,player:null,device:null,ready:false,awaiting:false,dur:0};
   var SCOPES='streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
   var REDIRECT=location.origin+location.pathname;
+
+  /* =========================================================
+     AUDIO-ENGINE (Web Audio API)
+     Der komplette Preview-Clip wird vor dem Start vollständig
+     heruntergeladen und dekodiert (statt per <audio>-Streaming).
+     Dadurch: (1) lässt sich die Stille am Clip-Anfang erkennen und
+     exakt wegschneiden, (2) startet die Wiedergabe sample-genau
+     ohne Netzwerk-/Decoder-Verzögerung, sobald der Button gedrückt
+     wird, und (3) kann der Button zuverlässig deaktiviert bleiben,
+     bis wirklich alles bereit ist.
+  ========================================================= */
+  var audioCtx=null, masterGain=null, activeSource=null, activeGain=null;
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      var AC=window.AudioContext||window.webkitAudioContext;
+      audioCtx=new AC();
+      masterGain=audioCtx.createGain();
+      masterGain.gain.value=cfg.volume;
+      masterGain.connect(audioCtx.destination);
+    }
+    return audioCtx;
+  }
+  function resumeAudioCtx(){
+    var ctx=ensureAudioCtx();
+    if(ctx.state==='suspended'){try{ctx.resume();}catch(e){}}
+    return ctx;
+  }
+  function fetchArrayBufferCors(url){
+    var attempts=[url,
+      'https://corsproxy.io/?url='+encodeURIComponent(url),
+      'https://api.allorigins.win/raw?url='+encodeURIComponent(url)];
+    var i=0;
+    function tryNext(){
+      if(i>=attempts.length)return Promise.reject(new Error('Audio-Download fehlgeschlagen'));
+      var u=attempts[i++];
+      return fetch(u,{mode:'cors'}).then(function(r){
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        return r.arrayBuffer();
+      }).catch(function(){return tryNext();});
+    }
+    return tryNext();
+  }
+  function loadAudioBuffer(url){
+    return fetchArrayBufferCors(url).then(function(buf){
+      var ctx=ensureAudioCtx();
+      return ctx.decodeAudioData(buf.slice(0));
+    });
+  }
+  function detectLeadingSilence(buffer){
+    try{
+      var data=buffer.getChannelData(0);
+      var sr=buffer.sampleRate;
+      var peak=0;
+      for(var p=0;p<data.length;p+=8){var v=Math.abs(data[p]);if(v>peak)peak=v;}
+      var thresh=Math.max(0.012,peak*0.045);
+      var win=Math.max(1,Math.floor(sr*0.005));
+      for(var i=0;i<data.length-win;i+=win){
+        var sum=0;
+        for(var j=0;j<win;j++){var v2=data[i+j];sum+=v2*v2;}
+        var rms=Math.sqrt(sum/win);
+        if(rms>thresh){
+          var t=Math.max(0,i/sr-0.012);
+          var maxOffset=Math.max(0,buffer.duration-16);
+          return Math.min(t,maxOffset);
+        }
+      }
+      return 0;
+    }catch(e){return 0;}
+  }
+  function playBufferClip(buffer,offset,dur){
+    var ctx=resumeAudioCtx();
+    var src=ctx.createBufferSource();
+    src.buffer=buffer;
+    var env=ctx.createGain();
+    src.connect(env);env.connect(masterGain);
+    var now=ctx.currentTime;
+    var fade=Math.min(0.008,dur/4);
+    env.gain.setValueAtTime(0,now);
+    env.gain.linearRampToValueAtTime(1,now+fade);
+    var sustainEnd=Math.max(fade,dur-fade);
+    env.gain.setValueAtTime(1,now+sustainEnd);
+    env.gain.linearRampToValueAtTime(0,now+dur);
+    var playLen=Math.min(dur+0.02,Math.max(0.01,buffer.duration-offset));
+    src.start(now,offset,playLen);
+    activeSource=src;activeGain=env;
+    src.onended=function(){if(activeSource===src){activeSource=null;activeGain=null;setPlaying(false);}};
+    setPlaying(true);
+  }
 
   var levelsEl=$('levels'),barEl=$('bar'),playBtn=$('playBtn'),timeLabel=$('timeLabel'),searchWrap=$('searchWrap'),
       searchInput=$('searchInput'),suggestionsEl=$('suggestions'),skipBtn=$('skipBtn'),chipsEl=$('chips'),
@@ -680,15 +1152,25 @@ impossible:[
     var spot=cfg.mode==='start';
     if(spot&&!SP.ready){openConnect();return;}
     var pool=parsePool(cfg.level),attempt=0;
-    state.loading=true;state.active=false;setLoading(true);hideSuggestions();
+    state.loading=true;state.active=false;setLoading(true,'Song wird geladen …');hideSuggestions();
     (function next(){
-      if(++attempt>12){state.loading=false;setLoading(false);$('fatalMessage').textContent='Es konnte kein passender Song geladen werden. Prüfe deine Verbindung und versuche es erneut.';openOv(fatalOverlay);return;}
+      if(++attempt>14){state.loading=false;setLoading(false);$('fatalMessage').textContent='Es konnte kein passender Song geladen werden. Prüfe deine Verbindung und versuche es erneut.';openOv(fatalOverlay);return;}
       var c=pick(pool);state.played[c.key]=1;
-      (spot?spResolve(c.artist,c.track):fetchBestTrackMatch(c.artist,c.track)).then(function(t){
+      var metaPromise=spot?spResolve(c.artist,c.track):fetchBestTrackMatch(c.artist,c.track);
+      metaPromise.then(function(t){
         if(!t){next();return;}
-        state.song=t;state.lastArtist=t.artistName;state.loading=false;setLoading(false);
-        if(!spot){try{audioEl.pause();audioEl.src=t.previewUrl;audioEl.load();}catch(e){}}
-        state.stageIndex=0;state.active=true;state.selectedSuggestion=null;searchInput.value='';renderBar();
+        if(spot){
+          state.song=t;state.lastArtist=t.artistName;state.loading=false;setLoading(false);
+          state.stageIndex=0;state.active=true;state.selectedSuggestion=null;searchInput.value='';renderBar();
+          return;
+        }
+        setLoading(true,'Song wird geladen …');
+        loadAudioBuffer(t.previewUrl).then(function(buffer){
+          t.audioBuffer=buffer;
+          t.silenceOffset=detectLeadingSilence(buffer);
+          state.song=t;state.lastArtist=t.artistName;state.loading=false;setLoading(false);
+          state.stageIndex=0;state.active=true;state.selectedSuggestion=null;searchInput.value='';renderBar();
+        }).catch(function(){next();});
       }).catch(next);
     })();
   }
@@ -697,7 +1179,8 @@ impossible:[
   /* ---------- Wiedergabe ---------- */
   function stopAudio(){
     clearTimeout(state.timer);SP.awaiting=false;
-    try{audioEl.pause();}catch(e){}
+    if(activeSource){try{activeSource.onended=null;activeSource.stop(0);}catch(e){}try{activeSource.disconnect();}catch(e){}activeSource=null;}
+    if(activeGain){try{activeGain.disconnect();}catch(e){}activeGain=null;}
     if(SP.player){try{SP.player.pause();}catch(e){}}
     setPlaying(false);
     var p=barEl.querySelector('.bar-play');if(p){p.style.transition='none';p.style.width='0';}
@@ -706,348 +1189,256 @@ impossible:[
   function playStage(){
     if(!state.song||!state.active||state.loading)return;
     stopAudio();
-    var d=stages()[state.stageIndex];animateBar(d);setPlaying(true);
+    var d=stages()[state.stageIndex];animateBar(d);
     if(cfg.mode==='start'){
+      setPlaying(true);
       try{SP.player.activateElement();}catch(e){}
       SP.awaiting=true;SP.dur=d;
       spPlay(state.song.uri).catch(function(){setPlaying(false);showToast('Wiedergabe nicht möglich.');});
       setTimeout(function(){if(SP.awaiting){SP.awaiting=false;stopAfter(d);}},1800);
     }else{
-      audioEl.currentTime=0;
-      var p=audioEl.play();
-      if(p&&p.then)p.then(function(){stopAfter(d);}).catch(function(){setPlaying(false);showToast('Wiedergabe nicht möglich.');});
-      else stopAfter(d);
+      if(!state.song.audioBuffer){showToast('Audio ist noch nicht bereit.');return;}
+      playBufferClip(state.song.audioBuffer,state.song.silenceOffset||0,d);
     }
   }
   playBtn.addEventListener('click',playStage);
-  audioEl.addEventListener('ended',function(){setPlaying(false);});
-  audioEl.addEventListener('error',function(){if(state.active&&cfg.mode==='preview'&&!state.loading){showToast('Vorschau nicht verfügbar – neuer Song …');state.active=false;loadNewSong();}});
-  function applyVolume(){audioEl.volume=cfg.volume;if(SP.player)SP.player.setVolume(cfg.volume);}
+  function applyVolume(){if(masterGain)masterGain.gain.value=cfg.volume;if(SP.player)SP.player.setVolume(cfg.volume);}
   $('vol').value=cfg.volume;
   $('vol').oninput=function(){cfg.volume=parseFloat(this.value);save();applyVolume();};
   $('modePreview').onclick=function(){if(cfg.mode==='preview')return;cfg.mode='preview';save();renderMode();newRound();};
   $('modeStart').onclick=function(){if(cfg.mode==='start')return;if(!SP.ready){openConnect();return;}cfg.mode='start';save();renderMode();newRound();};
 
-    /* =========================================================
+  /* =========================================================
      HILFSFUNKTIONEN: TEXT-NORMALISIERUNG & FUZZY-MATCHING
   ========================================================= */
   function normalizeText(str){
-    if(!str) return '';
-    var s = String(str).toLowerCase();
-    try { s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch(e){}
-    s = s.replace(/\(.*?\)|\[.*?\]/g, ' ');
-    s = s.replace(/\b(feat\.?|ft\.?|featuring)\b.*$/g, ' ');
-    s = s.replace(/-\s*(remaster(ed)?( \d{2,4})?|radio edit|single version|album version|mono|stereo|edit|bonus track|deluxe|explicit|clean).*$/gi, ' ');
-    s = s.replace(/[^a-z0-9]+/g, ' ');
-    s = s.replace(/\s+/g, ' ').trim();
+    if(!str)return '';
+    var s=String(str).toLowerCase();
+    try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){}
+    s=s.replace(/\(.*?\)|\[.*?\]/g,' ');
+    s=s.replace(/\b(feat\.?|ft\.?|featuring)\b.*$/g,' ');
+    s=s.replace(/-\s*(remaster(ed)?( \d{2,4})?|radio edit|single version|album version|mono|stereo|edit|bonus track|deluxe|explicit|clean).*$/gi,' ');
+    s=s.replace(/[^a-z0-9]+/g,' ');
+    s=s.replace(/\s+/g,' ').trim();
     return s;
   }
-
-  function levenshtein(a, b){
-    if(a === b) return 0;
-    var al = a.length, bl = b.length;
-    if(al === 0) return bl;
-    if(bl === 0) return al;
-    var prev = new Array(bl + 1);
-    var curr = new Array(bl + 1);
-    for(var j = 0; j <= bl; j++) prev[j] = j;
-    for(var i = 1; i <= al; i++){
-      curr[0] = i;
-      for(var k = 1; k <= bl; k++){
-        var cost = a.charAt(i - 1) === b.charAt(k - 1) ? 0 : 1;
-        curr[k] = Math.min(prev[k] + 1, curr[k - 1] + 1, prev[k - 1] + cost);
+  function levenshtein(a,b){
+    if(a===b)return 0;
+    var al=a.length,bl=b.length;
+    if(al===0)return bl;if(bl===0)return al;
+    var prev=new Array(bl+1),curr=new Array(bl+1);
+    for(var j=0;j<=bl;j++)prev[j]=j;
+    for(var i=1;i<=al;i++){
+      curr[0]=i;
+      for(var k=1;k<=bl;k++){
+        var cost=a.charAt(i-1)===b.charAt(k-1)?0:1;
+        curr[k]=Math.min(prev[k]+1,curr[k-1]+1,prev[k-1]+cost);
       }
-      var tmp = prev; prev = curr; curr = tmp;
+      var tmp=prev;prev=curr;curr=tmp;
     }
     return prev[bl];
   }
-
-  function similarity(a, b){
-    var maxLen = Math.max(a.length, b.length);
-    if(maxLen === 0) return 1;
-    return 1 - (levenshtein(a, b) / maxLen);
+  function similarity(a,b){
+    var maxLen=Math.max(a.length,b.length);
+    if(maxLen===0)return 1;
+    return 1-(levenshtein(a,b)/maxLen);
   }
 
   /* =========================================================
      NETZWERK: JSONP-ANFRAGE MIT TIMEOUT
-     Die Deezer Search API blockiert reguläre fetch()/XHR-Aufrufe aus
-     dem Browser per CORS. Sie unterstützt dafür offiziell JSONP über
+     Die Deezer Search API blockiert reguläre fetch()/XHR-Aufrufe
+     per CORS. Sie unterstützt dafür offiziell JSONP über
      "output=jsonp&callback=" — darüber läuft die Anfrage als
      <script>-Tag und ist von CORS nicht betroffen.
   ========================================================= */
-  var jsonpCounter = 0;
-
-  function jsonpRequest(url, timeoutMs){
-    return new Promise(function(resolve, reject){
+  var jsonpCounter=0;
+  function jsonpRequest(url,timeoutMs){
+    return new Promise(function(resolve,reject){
       jsonpCounter++;
-      var callbackName = '__songguessr_cb_' + Date.now() + '_' + jsonpCounter;
-      var script = document.createElement('script');
-      var timeoutId = null;
-      var finished = false;
-
+      var callbackName='__songguessr_cb_'+Date.now()+'_'+jsonpCounter;
+      var script=document.createElement('script');
+      var timeoutId=null,finished=false;
       function cleanup(){
-        finished = true;
-        if(timeoutId) clearTimeout(timeoutId);
-        try{ delete window[callbackName]; }catch(e){ window[callbackName] = undefined; }
-        if(script.parentNode) script.parentNode.removeChild(script);
+        finished=true;
+        if(timeoutId)clearTimeout(timeoutId);
+        try{delete window[callbackName];}catch(e){window[callbackName]=undefined;}
+        if(script.parentNode)script.parentNode.removeChild(script);
       }
-
-      window[callbackName] = function(data){
-        if(finished) return;
-        cleanup();
-        resolve(data);
-      };
-
-      script.onerror = function(){
-        if(finished) return;
-        cleanup();
-        reject(new Error('JSONP-Anfrage fehlgeschlagen'));
-      };
-
-      timeoutId = setTimeout(function(){
-        if(finished) return;
-        cleanup();
-        reject(new Error('JSONP-Anfrage: Zeitüberschreitung'));
-      }, timeoutMs);
-
-      var sep = url.indexOf('?') === -1 ? '?' : '&';
-      script.src = url + sep + 'output=jsonp&callback=' + callbackName;
+      window[callbackName]=function(data){if(finished)return;cleanup();resolve(data);};
+      script.onerror=function(){if(finished)return;cleanup();reject(new Error('JSONP-Anfrage fehlgeschlagen'));};
+      timeoutId=setTimeout(function(){if(finished)return;cleanup();reject(new Error('JSONP-Anfrage: Zeitüberschreitung'));},timeoutMs);
+      var sep=url.indexOf('?')===-1?'?':'&';
+      script.src=url+sep+'output=jsonp&callback='+callbackName;
       document.head.appendChild(script);
     });
   }
-
-  function fetchJsonWithTimeout(url, timeoutMs){
-    return jsonpRequest(url, timeoutMs);
-  }
+  function fetchJsonWithTimeout(url,timeoutMs){return jsonpRequest(url,timeoutMs);}
 
   /* =========================================================
-     API-SUCHE: ZIEL-SONG AUS EINEM POOL-EINTRAG AUFLÖSEN
+     DEEZER-SUCHE: ZIEL-SONG AUS EINEM POOL-EINTRAG AUFLÖSEN
   ========================================================= */
-  function deezerFamiliarity(candidate, targetTrackNorm, targetArtistNorm){
-    var score = 0;
-    score += similarity(normalizeText(candidate.title), targetTrackNorm) * 5;
-    score += similarity(normalizeText(candidate.artist && candidate.artist.name), targetArtistNorm) * 3;
-    score += Math.min(candidate.rank || 0, 900000) / 900000 * 2.2;
-    if(BAD_VERSION_RX.test(candidate.title || '')) score -= 4;
-    if(!candidate.preview) score -= 20;
+  function deezerFamiliarity(candidate,targetTrackNorm,targetArtistNorm){
+    var score=0;
+    score+=similarity(normalizeText(candidate.title),targetTrackNorm)*5;
+    score+=similarity(normalizeText(candidate.artist&&candidate.artist.name),targetArtistNorm)*3;
+    score+=Math.min(candidate.rank||0,900000)/900000*2.2;
+    if(BAD_VERSION_RX.test(candidate.title||''))score-=4;
+    if(!candidate.preview)score-=20;
     return score;
   }
-
-  function fetchBestTrackMatch(artist, track){
-    var term = encodeURIComponent('artist:"' + artist + '" track:"' + track + '"');
-    var url = 'https://api.deezer.com/search?limit=10&q=' + term;
-    return fetchJsonWithTimeout(url, 9000).then(function(data){
-      var results = (data && data.data) || [];
-      if(!results.length){
-        var loose = 'https://api.deezer.com/search?limit=10&q=' + encodeURIComponent(artist + ' ' + track);
-        return fetchJsonWithTimeout(loose, 9000).then(function(d2){ return resolveDeezer((d2 && d2.data) || [], artist, track); });
-      }
-      return resolveDeezer(results, artist, track);
-    });
-  }
-
-  function resolveDeezer(results, artist, track){
-    var targetTrackNorm = normalizeText(track);
-    var targetArtistNorm = normalizeText(artist);
-    var candidates = results.filter(function(r){ return !!r.preview; });
-    if(!candidates.length) return null;
-
-    var clean = candidates.filter(function(r){ return !BAD_VERSION_RX.test(r.title || ''); });
-    if(clean.length) candidates = clean;
-
-    candidates.sort(function(a, b){
-      return deezerFamiliarity(b, targetTrackNorm, targetArtistNorm) - deezerFamiliarity(a, targetTrackNorm, targetArtistNorm);
-    });
-
-    var best = candidates[0];
-    if(!best || !best.preview) return null;
-
-    return {
-      trackId: best.id,
-      trackName: best.title,
-      artistName: best.artist ? best.artist.name : '',
-      collectionName: best.album ? (best.album.title || '') : '',
-      artworkUrl: best.album ? (best.album.cover_xl || best.album.cover_big || best.album.cover_medium || '') : '',
-      previewUrl: best.preview
+  function resolveDeezer(results,artist,track){
+    var targetTrackNorm=normalizeText(track),targetArtistNorm=normalizeText(artist);
+    var candidates=results.filter(function(r){return !!r.preview;});
+    if(!candidates.length)return null;
+    var clean=candidates.filter(function(r){return !BAD_VERSION_RX.test(r.title||'');});
+    if(clean.length)candidates=clean;
+    candidates.sort(function(a,b){return deezerFamiliarity(b,targetTrackNorm,targetArtistNorm)-deezerFamiliarity(a,targetTrackNorm,targetArtistNorm);});
+    var best=candidates[0];
+    if(!best||!best.preview)return null;
+    return{
+      trackId:best.id,trackName:best.title,artistName:best.artist?best.artist.name:'',
+      collectionName:best.album?(best.album.title||''):'',
+      artworkUrl:best.album?(best.album.cover_xl||best.album.cover_big||best.album.cover_medium||''):'',
+      previewUrl:best.preview
     };
   }
-  /* =========================================================
-     GEWINN-SOUND
-     Ein kurzer, modern klingender Erfolgs-Jingle, komplett per
-     Web Audio API synthetisiert — keine externe Audiodatei nötig.
-  ========================================================= */
-  var winAudioCtx = null;
-
-  function getWinAudioCtx(){
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return null;
-    if(!winAudioCtx) winAudioCtx = new AC();
-    if(winAudioCtx.state === 'suspended'){
-      try{ winAudioCtx.resume(); }catch(e){}
-    }
-    return winAudioCtx;
+  function fetchBestTrackMatch(artist,track){
+    var term=encodeURIComponent('artist:"'+artist+'" track:"'+track+'"');
+    var url='https://api.deezer.com/search?limit=10&q='+term;
+    return fetchJsonWithTimeout(url,9000).then(function(data){
+      var results=(data&&data.data)||[];
+      if(!results.length){
+        var loose='https://api.deezer.com/search?limit=10&q='+encodeURIComponent(artist+' '+track);
+        return fetchJsonWithTimeout(loose,9000).then(function(d2){return resolveDeezer((d2&&d2.data)||[],artist,track);});
+      }
+      return resolveDeezer(results,artist,track);
+    });
   }
 
+  /* =========================================================
+     GEWINN-SOUND
+  ========================================================= */
+  var winAudioCtx=null;
+  function getWinAudioCtx(){
+    var AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return null;
+    if(!winAudioCtx)winAudioCtx=new AC();
+    if(winAudioCtx.state==='suspended'){try{winAudioCtx.resume();}catch(e){}}
+    return winAudioCtx;
+  }
   function playWinSound(){
-    var ctx = getWinAudioCtx();
-    if(!ctx) return;
+    var ctx=getWinAudioCtx();
+    if(!ctx)return;
     try{
-      var now = ctx.currentTime;
-      var notes = [523.25, 659.25, 783.99, 1046.50]; // C5 – E5 – G5 – C6 Dur-Arpeggio
-
-      var master = ctx.createGain();
-      master.gain.setValueAtTime(0.5, now);
+      var now=ctx.currentTime;
+      var notes=[523.25,659.25,783.99,1046.50];
+      var master=ctx.createGain();
+      master.gain.setValueAtTime(0.5,now);
       master.connect(ctx.destination);
-
-      notes.forEach(function(freq, i){
-        var t = now + i * 0.09;
-
-        var osc = ctx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, t);
-
-        var shimmer = ctx.createOscillator();
-        shimmer.type = 'sine';
-        shimmer.frequency.setValueAtTime(freq * 2, t);
-
-        var g = ctx.createGain();
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.5, t + 0.015);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
-
-        var gs = ctx.createGain();
-        gs.gain.setValueAtTime(0.0001, t);
-        gs.gain.exponentialRampToValueAtTime(0.14, t + 0.015);
-        gs.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
-
-        osc.connect(g); g.connect(master);
-        shimmer.connect(gs); gs.connect(master);
-
-        osc.start(t); osc.stop(t + 0.6);
-        shimmer.start(t); shimmer.stop(t + 0.45);
+      notes.forEach(function(freq,i){
+        var t=now+i*0.09;
+        var osc=ctx.createOscillator();osc.type='triangle';osc.frequency.setValueAtTime(freq,t);
+        var shimmer=ctx.createOscillator();shimmer.type='sine';shimmer.frequency.setValueAtTime(freq*2,t);
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.5,t+0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
+        var gs=ctx.createGain();
+        gs.gain.setValueAtTime(0.0001,t);
+        gs.gain.exponentialRampToValueAtTime(0.14,t+0.015);
+        gs.gain.exponentialRampToValueAtTime(0.0001,t+0.4);
+        osc.connect(g);g.connect(master);
+        shimmer.connect(gs);gs.connect(master);
+        osc.start(t);osc.stop(t+0.6);
+        shimmer.start(t);shimmer.stop(t+0.45);
       });
-    }catch(e){ /* Soundwiedergabe optional – Fehler hier dürfen das Spiel nicht stören */ }
+    }catch(e){}
   }
 
   /* =========================================================
      LIVE-SUCHE (SUCHVORSCHLÄGE)
   ========================================================= */
-  var searchDebounceTimer = null;
-  var searchRequestToken = 0;
-
-  searchInput.addEventListener('input', function(){
-    state.selectedSuggestion = null;
+  var searchDebounceTimer=null,searchRequestToken=0;
+  searchInput.addEventListener('input',function(){
+    state.selectedSuggestion=null;
     clearTimeout(searchDebounceTimer);
-    var q = searchInput.value.trim();
-    if(q.length < 2){ renderSuggestions([]); return; }
-    searchDebounceTimer = setTimeout(function(){ doSearch(q); }, 320);
+    var q=searchInput.value.trim();
+    if(q.length<2){renderSuggestions([]);return;}
+    searchDebounceTimer=setTimeout(function(){doSearch(q);},320);
   });
-
-  searchInput.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){ e.preventDefault(); submitGuess(); }
+  searchInput.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();submitGuess();}
   });
-
-  document.addEventListener('click', function(e){
-    if(!searchWrap.contains(e.target)) hideSuggestions();
+  document.addEventListener('click',function(e){
+    if(!searchWrap.contains(e.target))hideSuggestions();
   });
-
   function doSearch(query){
-    var token = ++searchRequestToken;
-    var url = 'https://api.deezer.com/search?limit=8&q=' + encodeURIComponent(query);
-    fetchJsonWithTimeout(url, 6000).then(function(data){
-      if(token !== searchRequestToken) return;
-      renderSuggestions((data && data.data) ? data.data : []);
+    var token=++searchRequestToken;
+    var url='https://api.deezer.com/search?limit=8&q='+encodeURIComponent(query);
+    fetchJsonWithTimeout(url,6000).then(function(data){
+      if(token!==searchRequestToken)return;
+      renderSuggestions((data&&data.data)?data.data:[]);
     }).catch(function(){
-      if(token !== searchRequestToken) return;
+      if(token!==searchRequestToken)return;
       renderSuggestions([]);
     });
   }
-
   function renderSuggestions(results){
-    suggestionsEl.innerHTML = '';
-    if(!results || !results.length){
-      if(searchInput.value.trim().length >= 2){
-        var empty = document.createElement('div');
-        empty.className = 'suggestion-empty';
-        empty.textContent = 'Keine Ergebnisse gefunden';
+    suggestionsEl.innerHTML='';
+    if(!results||!results.length){
+      if(searchInput.value.trim().length>=2){
+        var empty=document.createElement('div');
+        empty.className='suggestion-empty';
+        empty.textContent='Keine Ergebnisse gefunden';
         suggestionsEl.appendChild(empty);
-        suggestionsEl.hidden = false;
-      } else {
-        hideSuggestions();
-      }
+        suggestionsEl.hidden=false;
+      }else hideSuggestions();
       return;
     }
-
     results.forEach(function(r){
-      if(!r.title) return;
-      var artistName = r.artist ? r.artist.name : '';
-      var albumName = r.album ? r.album.title : '';
-      var cover = r.album ? (r.album.cover_small || r.album.cover_medium || '') : '';
-
-      var item = document.createElement('div');
-      item.className = 'suggestion-item';
-
-      var img = document.createElement('img');
-      img.className = 'suggestion-cover';
-      img.src = cover;
-      img.alt = '';
+      if(!r.title)return;
+      var artistName=r.artist?r.artist.name:'';
+      var albumName=r.album?r.album.title:'';
+      var cover=r.album?(r.album.cover_small||r.album.cover_medium||''):'';
+      var item=document.createElement('div');
+      item.className='suggestion-item';
+      var img=document.createElement('img');
+      img.className='suggestion-cover';img.src=cover;img.alt='';
       item.appendChild(img);
-
-      var textWrap = document.createElement('div');
-      textWrap.className = 'suggestion-text';
-      var title = document.createElement('div');
-      title.className = 'suggestion-title';
-      title.textContent = r.title || '';
-      var sub = document.createElement('div');
-      sub.className = 'suggestion-sub';
-      sub.textContent = artistName + (albumName ? ' · ' + albumName : '');
-      textWrap.appendChild(title);
-      textWrap.appendChild(sub);
+      var textWrap=document.createElement('div');
+      textWrap.className='suggestion-text';
+      var title=document.createElement('div');
+      title.className='suggestion-title';title.textContent=r.title||'';
+      var sub=document.createElement('div');
+      sub.className='suggestion-sub';sub.textContent=artistName+(albumName?' · '+albumName:'');
+      textWrap.appendChild(title);textWrap.appendChild(sub);
       item.appendChild(textWrap);
-
       if(r.preview){
-        var prevBtn = document.createElement('button');
-        prevBtn.type = 'button';
-        prevBtn.className = 'suggestion-preview';
-        prevBtn.textContent = '▶';
-        prevBtn.setAttribute('aria-label', 'Vorschau anhören');
-        prevBtn.addEventListener('click', function(ev){
-          ev.stopPropagation();
-          playSuggestionPreview(r.preview);
-        });
+        var prevBtn=document.createElement('button');
+        prevBtn.type='button';prevBtn.className='suggestion-preview';prevBtn.textContent='▶';
+        prevBtn.setAttribute('aria-label','Vorschau anhören');
+        prevBtn.addEventListener('click',function(ev){ev.stopPropagation();playSuggestionPreview(r.preview);});
         item.appendChild(prevBtn);
       }
-
-      item.addEventListener('click', function(){
-        state.selectedSuggestion = { trackId: r.id, trackName: r.title, artistName: artistName };
-        searchInput.value = artistName + ' - ' + r.title;
+      item.addEventListener('click',function(){
+        state.selectedSuggestion={trackId:r.id,trackName:r.title,artistName:artistName};
+        searchInput.value=artistName+' - '+r.title;
         hideSuggestions();
         submitGuess();
       });
-
       suggestionsEl.appendChild(item);
     });
-
-    suggestionsEl.hidden = false;
+    suggestionsEl.hidden=false;
   }
-
-  function hideSuggestions(){
-    suggestionsEl.hidden = true;
-    suggestionsEl.innerHTML = '';
-  }
-
-  var previewAudio = null;
+  function hideSuggestions(){suggestionsEl.hidden=true;suggestionsEl.innerHTML='';}
+  var previewAudio=null;
   function playSuggestionPreview(url){
-    if(!previewAudio){
-      previewAudio = new Audio();
-    }
+    if(!previewAudio)previewAudio=new Audio();
     try{
-      previewAudio.pause();
-      previewAudio.src = url;
-      previewAudio.currentTime = 0;
-      var p = previewAudio.play();
-      if(p && p.catch) p.catch(function(){});
-      setTimeout(function(){ try{ previewAudio.pause(); }catch(e){} }, 1200);
+      previewAudio.pause();previewAudio.src=url;previewAudio.currentTime=0;
+      var p=previewAudio.play();
+      if(p&&p.catch)p.catch(function(){});
+      setTimeout(function(){try{previewAudio.pause();}catch(e){}},1200);
     }catch(e){}
   }
 
